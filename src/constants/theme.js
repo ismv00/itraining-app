@@ -1,10 +1,14 @@
 // Paleta e tipografia do iTraining — espelha src/app/globals.css (web) e
 // referencia/mockup.html. Não inventar hex code novo fora daqui.
+//
+// inkS950 é usado como cor de texto (títulos) e por isso inverte no tema
+// escuro. panel950 é o tom fixo de elementos "sempre escuros" (cards de
+// destaque, botão principal) que não muda entre os temas — mesmo espírito
+// do panel-950 no painel web.
 
-export const colors = {
+export const lightColors = {
   inkS950: '#0E1B16',
-  inkS800: '#16281F',
-  inkS700: '#20392C',
+  panel950: '#0E1B16',
 
   paper: '#F3F2EC',
   surface: '#FFFFFF',
@@ -27,6 +31,35 @@ export const colors = {
   goldDark: '#7C540E',
   goldSoft: '#FBEACB',
 };
+
+export const darkColors = {
+  ...lightColors,
+
+  inkS950: '#F3F2EC',
+  panel950: '#0E1B16',
+
+  paper: '#15140F',
+  surface: '#1E1C16',
+  line: '#33312A',
+  lineStrong: '#45412F',
+
+  text: '#EDEFE9',
+  textMuted: '#A6A99C',
+  textFaint: '#74776A',
+
+  coralDark: '#FF9478',
+  coralSoft: '#3D1F16',
+
+  jadeDark: '#6FCDA8',
+  jadeSoft: '#12332A',
+
+  goldDark: '#F0B94D',
+  goldSoft: '#3A2B0E',
+};
+
+// Mantido pra quem só precisa de uma cor fixa fora de tela (ex: ícone com
+// cor padrão) — nesses casos não há tema pra reagir mesmo.
+export const colors = lightColors;
 
 export const fonts = {
   display: 'SpaceGrotesk_700Bold',

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import Svg, { Path } from 'react-native-svg';
-import { colors, fonts } from '../constants/theme';
+import { fonts } from '../constants/theme';
+import { useTheme } from '../lib/ThemeContext';
 import useTreinosComSessoes from '../lib/useTreinosComSessoes';
 
 const BAR_AREA_HEIGHT = 100;
@@ -14,7 +15,7 @@ function formatarDataCurta(data) {
   return new Date(data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 }
 
-function DumbbellIcon({ color = colors.goldDark, size = 16 }) {
+function DumbbellIcon({ color, size = 16 }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M6 8v8M18 8v8M2 12h4M18 12h4M8 12h8" />
@@ -70,6 +71,8 @@ function calcularTendencia(pontos) {
 }
 
 export default function ProgressoScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const tabBarHeight = useBottomTabBarHeight();
   const { treinos, carregando, erro, recarregar } = useTreinosComSessoes();
   const [exercicioSelecionadoId, setExercicioSelecionadoId] = useState(null);
@@ -143,7 +146,7 @@ export default function ProgressoScreen() {
                     activeOpacity={0.85}
                   >
                     <View style={styles.epIcon}>
-                      <DumbbellIcon />
+                      <DumbbellIcon color={colors.goldDark} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.epName}>{ex.nome}</Text>
@@ -168,7 +171,7 @@ export default function ProgressoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.paper,

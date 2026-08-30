@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import * as ImagePicker from 'expo-image-picker';
-import Svg, { Path } from 'react-native-svg';
-import { colors, fonts } from '../constants/theme';
+import Svg, { Path, Circle } from 'react-native-svg';
+import { fonts } from '../constants/theme';
 import apiFetch from '../lib/api';
 import { useAuth } from '../lib/AuthContext';
+import { useTheme } from '../lib/ThemeContext';
 import { iniciais } from '../lib/text';
 import { PerfilIcon } from '../navigation/TabIcons';
 
@@ -28,8 +29,27 @@ function EditIcon({ color = '#fff', size = 12 }) {
   );
 }
 
+function SunIcon({ color, size = 16 }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
+      <Circle cx="12" cy="12" r="4" />
+      <Path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </Svg>
+  );
+}
+
+function MoonIcon({ color, size = 16 }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z" />
+    </Svg>
+  );
+}
+
 export default function PerfilScreen() {
   const { logout } = useAuth();
+  const { colors, escuro, alternarTema } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const tabBarHeight = useBottomTabBarHeight();
   const [aluno, setAluno] = useState(null);
   const [carregando, setCarregando] = useState(true);
@@ -169,6 +189,14 @@ export default function PerfilScreen() {
       </View>
 
       <View style={{ paddingBottom: tabBarHeight + 12 }}>
+        <TouchableOpacity style={styles.themeRow} onPress={alternarTema} activeOpacity={0.85}>
+          <View style={styles.themeIcon}>
+            {escuro ? <MoonIcon color={colors.textMuted} size={16} /> : <SunIcon color={colors.textMuted} size={16} />}
+          </View>
+          <Text style={styles.themeText}>{escuro ? 'Tema escuro' : 'Tema claro'}</Text>
+          <Text style={styles.themeAction}>Trocar</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.logoutButton} onPress={logout} activeOpacity={0.85}>
           <Text style={styles.logoutText}>Sair da conta</Text>
         </TouchableOpacity>
@@ -177,7 +205,7 @@ export default function PerfilScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.paper,
@@ -245,7 +273,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.inkS950,
+    backgroundColor: colors.panel950,
     borderWidth: 2,
     borderColor: colors.paper,
     alignItems: 'center',
@@ -335,6 +363,38 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     color: colors.textFaint,
     marginTop: 1,
+  },
+  themeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    marginHorizontal: 20,
+    marginBottom: 10,
+  },
+  themeIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    backgroundColor: colors.paper,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeText: {
+    flex: 1,
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 13,
+    color: colors.inkS950,
+  },
+  themeAction: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 12.5,
+    color: colors.coral,
   },
   logoutButton: {
     backgroundColor: colors.coralSoft,

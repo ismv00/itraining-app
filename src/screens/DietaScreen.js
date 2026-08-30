@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { WebView } from 'react-native-webview';
 import Svg, { Path, Circle } from 'react-native-svg';
-import { colors, fonts } from '../constants/theme';
+import { colors as coresFixas, fonts } from '../constants/theme';
+import { useTheme } from '../lib/ThemeContext';
 import apiFetch from '../lib/api';
 import { DietaIcon } from '../navigation/TabIcons';
 
@@ -19,7 +20,8 @@ function formatarDataCompleta(data) {
   return new Date(data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-function ChevronLeft({ color = colors.coral, size = 18 }) {
+// coral não muda entre temas — pode usar a paleta fixa como default aqui.
+function ChevronLeft({ color = coresFixas.coral, size = 18 }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
       <Path d="M15 18l-6-6 6-6" />
@@ -37,6 +39,8 @@ function EyeIcon({ color = '#fff', size = 15 }) {
 }
 
 export default function DietaScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const tabBarHeight = useBottomTabBarHeight();
   const [dieta, setDieta] = useState(null);
   const [historico, setHistorico] = useState([]);
@@ -161,7 +165,7 @@ export default function DietaScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.paper,
@@ -225,7 +229,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   pdfHero: {
-    backgroundColor: colors.inkS950,
+    backgroundColor: colors.panel950,
     borderRadius: 20,
     padding: 22,
     marginBottom: 16,

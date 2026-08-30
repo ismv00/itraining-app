@@ -12,6 +12,15 @@ function Icon({ color, size, children }) {
   );
 }
 
+export function HomeIcon({ color, size = 24 }) {
+  return (
+    <Icon color={color} size={size}>
+      <Path d="M3 11l9-7 9 7" />
+      <Path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" />
+    </Icon>
+  );
+}
+
 export function TreinosIcon({ color, size = 24 }) {
   return (
     <Icon color={color} size={size}>

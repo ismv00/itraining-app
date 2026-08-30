@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import Svg, { Path } from 'react-native-svg';
-import { colors, fonts } from '../constants/theme';
+import { fonts } from '../constants/theme';
 import { useAuth } from '../lib/AuthContext';
+import { useTheme } from '../lib/ThemeContext';
 import useTreinosComSessoes from '../lib/useTreinosComSessoes';
 import { iniciais } from '../lib/text';
+import { inicioDoDia, chaveDia, feitoHoje, calcularSequencia, contarDiasDistintosNaSemana } from '../lib/treinoMetrics';
 
 const DIAS_SEMANA_VALORES = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
 const DIAS_SEMANA_LABELS = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
@@ -17,49 +19,6 @@ const DIAS_SEMANA_POR_GETDAY = ['domingo', 'segunda', 'terca', 'quarta', 'quinta
 
 function diaSemanaHoje() {
   return DIAS_SEMANA_POR_GETDAY[new Date().getDay()];
-}
-
-function inicioDoDia(data) {
-  const d = new Date(data);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function chaveDia(data) {
-  return inicioDoDia(data).toISOString().slice(0, 10);
-}
-
-function feitoHoje(treino) {
-  const hojeChave = chaveDia(new Date());
-  return treino.sessoes.some((s) => chaveDia(s.dataExecucao) === hojeChave);
-}
-
-function calcularSequencia(sessoes) {
-  if (sessoes.length === 0) return 0;
-  const dias = new Set(sessoes.map((s) => chaveDia(s.dataExecucao)));
-  const maisRecenteChave = [...dias].sort().reverse()[0];
-  const hoje = inicioDoDia(new Date());
-  const diffDias = Math.round((hoje - new Date(`${maisRecenteChave}T00:00:00`)) / 86400000);
-  if (diffDias > 1) return 0;
-
-  let streak = 0;
-  let cursor = new Date(`${maisRecenteChave}T00:00:00`);
-  while (dias.has(chaveDia(cursor))) {
-    streak++;
-    cursor = new Date(cursor.getTime() - 86400000);
-  }
-  return streak;
-}
-
-function contarDiasDistintosNaSemana(sessoes) {
-  const hoje = inicioDoDia(new Date());
-  const diaSemanaAtual = (hoje.getDay() + 6) % 7; // 0 = segunda
-  const inicioSemana = new Date(hoje.getTime() - diaSemanaAtual * 86400000);
-
-  const dias = new Set(
-    sessoes.filter((s) => new Date(s.dataExecucao) >= inicioSemana).map((s) => chaveDia(s.dataExecucao))
-  );
-  return dias.size;
 }
 
 function formatarRelativo(data) {
@@ -93,6 +52,8 @@ function ChevronRight({ color = '#fff', size = 12 }) {
 }
 
 function WeekStrip({ diasSemana }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={styles.weekStrip}>
       {DIAS_SEMANA_VALORES.map((valor, i) => {
@@ -108,6 +69,8 @@ function WeekStrip({ diasSemana }) {
 }
 
 function TreinoCard({ treino, onIniciar, destaque, mostrarPercentual }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const feito = treino.sessoes.length > 0;
   const ultimaSessao = feito
     ? treino.sessoes.reduce((a, b) => (new Date(a.dataExecucao) > new Date(b.dataExecucao) ? a : b))
@@ -155,6 +118,8 @@ function TreinoCard({ treino, onIniciar, destaque, mostrarPercentual }) {
 
 export default function TreinosScreen({ navigation }) {
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const tabBarHeight = useBottomTabBarHeight();
   const { treinos, carregando, erro, recarregar } = useTreinosComSessoes();
   const [aba, setAba] = useState('disponiveis');
@@ -275,7 +240,7 @@ export default function TreinosScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.paper,
@@ -351,7 +316,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.inkS950,
+    backgroundColor: colors.panel950,
     borderRadius: 16,
     padding: 14,
   },

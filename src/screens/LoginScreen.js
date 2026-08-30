@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -9,13 +9,16 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { colors, fonts } from '../constants/theme';
+import { fonts } from '../constants/theme';
 import apiFetch from '../lib/api';
 import { useAuth } from '../lib/AuthContext';
+import { useTheme } from '../lib/ThemeContext';
 import BarbellIcon from '../components/BarbellIcon';
 
 export default function LoginScreen() {
   const { login, authMessage } = useAuth();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
@@ -97,7 +100,7 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.paper,

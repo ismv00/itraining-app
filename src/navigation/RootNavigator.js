@@ -1,9 +1,11 @@
-import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
 import { StyleSheet } from 'react-native';
-import { colors, fonts } from '../constants/theme';
-import { TreinosIcon, ProgressoIcon, DietaIcon, PerfilIcon } from './TabIcons';
+import { fonts } from '../constants/theme';
+import { useTheme } from '../lib/ThemeContext';
+import { HomeIcon, TreinosIcon, ProgressoIcon, DietaIcon, PerfilIcon } from './TabIcons';
+import HomeScreen from '../screens/HomeScreen';
 import TreinosStack from './TreinosStack';
 import ProgressoScreen from '../screens/ProgressoScreen';
 import DietaScreen from '../screens/DietaScreen';
@@ -11,22 +13,10 @@ import PerfilScreen from '../screens/PerfilScreen';
 
 const Tab = createBottomTabNavigator();
 
-const navigationTheme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    background: colors.paper,
-    card: colors.paper,
-    border: colors.line,
-    primary: colors.coral,
-    text: colors.text,
-  },
-};
-
-function TabBarBackground() {
+function TabBarBackground({ escuro }) {
   return (
     <BlurView
-      tint="light"
+      tint={escuro ? 'dark' : 'light'}
       intensity={80}
       style={StyleSheet.absoluteFill}
     />
@@ -34,6 +24,20 @@ function TabBarBackground() {
 }
 
 export default function RootNavigator() {
+  const { colors, escuro } = useTheme();
+
+  const navigationTheme = {
+    ...(escuro ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(escuro ? DarkTheme.colors : DefaultTheme.colors),
+      background: colors.paper,
+      card: colors.paper,
+      border: colors.line,
+      primary: colors.coral,
+      text: colors.text,
+    },
+  };
+
   return (
     <NavigationContainer theme={navigationTheme}>
       <Tab.Navigator
@@ -41,11 +45,25 @@ export default function RootNavigator() {
           headerShown: false,
           tabBarActiveTintColor: colors.coral,
           tabBarInactiveTintColor: colors.textFaint,
-          tabBarLabelStyle: styles.tabLabel,
-          tabBarStyle: styles.tabBar,
-          tabBarBackground: TabBarBackground,
+          tabBarLabelStyle: { fontFamily: fonts.bodySemiBold, fontSize: 10 },
+          tabBarStyle: {
+            position: 'absolute',
+            backgroundColor: 'transparent',
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopColor: colors.line,
+            elevation: 0,
+          },
+          tabBarBackground: () => <TabBarBackground escuro={escuro} />,
         }}
       >
+        <Tab.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{
+            tabBarLabel: 'Início',
+            tabBarIcon: ({ color, size }) => <HomeIcon color={color} size={size} />,
+          }}
+        />
         <Tab.Screen
           name="Treinos"
           component={TreinosStack}
@@ -70,17 +88,3 @@ export default function RootNavigator() {
     </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBar: {
-    position: 'absolute',
-    backgroundColor: 'transparent',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.line,
-    elevation: 0,
-  },
-  tabLabel: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 10,
-  },
-});
