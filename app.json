@@ -30,6 +30,12 @@
           "resizeMode": "contain",
           "backgroundColor": "#F3F2EC"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O iTraining precisa acessar suas fotos pra você definir uma foto de perfil."
+        }
       ]
     ]
   }

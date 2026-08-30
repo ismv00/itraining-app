@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import * as ImagePicker from 'expo-image-picker';
+import Svg, { Path } from 'react-native-svg';
 import { colors, fonts } from '../constants/theme';
 import apiFetch from '../lib/api';
 import { useAuth } from '../lib/AuthContext';
 import { iniciais } from '../lib/text';
 import { PerfilIcon } from '../navigation/TabIcons';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+const MAX_FOTO_BYTES = 5 * 1024 * 1024;
 
 function numeroBR(valor, casas) {
   return Number(valor).toLocaleString('pt-BR', {
@@ -15,12 +20,21 @@ function numeroBR(valor, casas) {
   });
 }
 
+function EditIcon({ color = '#fff', size = 12 }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.3} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+    </Svg>
+  );
+}
+
 export default function PerfilScreen() {
   const { logout } = useAuth();
   const tabBarHeight = useBottomTabBarHeight();
   const [aluno, setAluno] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
+  const [enviandoFoto, setEnviandoFoto] = useState(false);
 
   const carregarPerfil = useCallback(async () => {
     setCarregando(true);
@@ -39,6 +53,44 @@ export default function PerfilScreen() {
     carregarPerfil();
   }, [carregarPerfil]);
 
+  async function trocarFoto() {
+    const permissao = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissao.granted) {
+      Alert.alert('Permissão necessária', 'Precisamos acessar suas fotos pra trocar a foto de perfil.');
+      return;
+    }
+
+    const resultado = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (resultado.canceled) return;
+
+    const imagem = resultado.assets[0];
+    if (imagem.fileSize && imagem.fileSize > MAX_FOTO_BYTES) {
+      Alert.alert('Imagem muito grande', 'Escolha uma foto de até 5MB.');
+      return;
+    }
+
+    setEnviandoFoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('foto', {
+        uri: imagem.uri,
+        name: imagem.fileName || 'foto.jpg',
+        type: imagem.mimeType || 'image/jpeg',
+      });
+      const atualizado = await apiFetch('/aluno/perfil/foto', { method: 'POST', body: formData });
+      setAluno((prev) => ({ ...prev, ...atualizado }));
+    } catch (e) {
+      Alert.alert('Erro ao trocar foto', e.message);
+    } finally {
+      setEnviandoFoto(false);
+    }
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.content}>
@@ -56,8 +108,22 @@ export default function PerfilScreen() {
         ) : (
           <>
             <View style={styles.hero}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{iniciais(aluno.nome)}</Text>
+              <View style={styles.avatarWrap}>
+                {aluno.fotoUrl ? (
+                  <Image source={{ uri: `${API_URL}${aluno.fotoUrl}` }} style={styles.avatarImage} />
+                ) : (
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>{iniciais(aluno.nome)}</Text>
+                  </View>
+                )}
+                <TouchableOpacity
+                  style={styles.avatarEditBtn}
+                  onPress={trocarFoto}
+                  disabled={enviandoFoto}
+                  activeOpacity={0.8}
+                >
+                  {enviandoFoto ? <ActivityIndicator color="#fff" size="small" /> : <EditIcon />}
+                </TouchableOpacity>
               </View>
               <Text style={styles.name}>{aluno.nome}</Text>
               <Text style={styles.email}>{aluno.email}</Text>
@@ -80,9 +146,13 @@ export default function PerfilScreen() {
 
             <Text style={styles.sectionLbl}>Personal trainer</Text>
             <View style={styles.personalRow}>
-              <View style={styles.personalIcon}>
-                <PerfilIcon color={colors.textMuted} size={16} />
-              </View>
+              {aluno.personalTrainer?.fotoUrl ? (
+                <Image source={{ uri: `${API_URL}${aluno.personalTrainer.fotoUrl}` }} style={styles.personalPhoto} />
+              ) : (
+                <View style={styles.personalIcon}>
+                  <PerfilIcon color={colors.textMuted} size={16} />
+                </View>
+              )}
               <View style={{ flex: 1 }}>
                 {aluno.personalTrainer?.nome ? (
                   <>
@@ -145,6 +215,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 22,
   },
+  avatarWrap: {
+    width: 84,
+    height: 84,
+    marginBottom: 12,
+  },
   avatar: {
     width: 84,
     height: 84,
@@ -152,12 +227,29 @@ const styles = StyleSheet.create({
     backgroundColor: colors.coralSoft,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+  },
+  avatarImage: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
   },
   avatarText: {
     fontFamily: fonts.display,
     fontSize: 28,
     color: colors.coralDark,
+  },
+  avatarEditBtn: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.inkS950,
+    borderWidth: 2,
+    borderColor: colors.paper,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   name: {
     fontFamily: fonts.display,
@@ -227,6 +319,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paper,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  personalPhoto: {
+    width: 34,
+    height: 34,
+    borderRadius: 9,
   },
   personalName: {
     fontFamily: fonts.bodySemiBold,
