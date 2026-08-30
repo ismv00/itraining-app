@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>iTraining — App do Aluno</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-950:#0E1B16; --ink-800:#16281F; --ink-700:#20392C;
+    --paper:#F3F2EC; --surface:#FFFFFF; --line:#E5E1D3; --line-strong:#D8D3C0;
+    --text:#172420; --text-muted:#6E756A; --text-faint:#9CA097;
+    --coral:#FF5B37; --coral-dark:#B93B20; --coral-soft:#FFE3D8;
+    --jade:#1F7A5C; --jade-dark:#124C39; --jade-soft:#DCEFE5;
+    --gold:#DE9C2E; --gold-dark:#7C540E; --gold-soft:#FBEACB;
+    --font-display:'Space Grotesk',sans-serif; --font-body:'Inter',sans-serif; --font-mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  body{font-family:var(--font-body); background:#EAE7DC; display:flex; align-items:center; justify-content:center; min-height:900px; padding:30px;}
+
+  /* ===== PHONE FRAME ===== */
+  .phone{
+    width:390px; height:844px; background:#0A0A0A; border-radius:56px;
+    padding:14px; box-shadow:0 30px 70px rgba(0,0,0,.35); position:relative;
+  }
+  .screen-wrap{
+    width:100%; height:100%; background:var(--paper); border-radius:42px; overflow:hidden;
+    position:relative; display:flex; flex-direction:column;
+  }
+  .notch{
+    position:absolute; top:0; left:50%; transform:translateX(-50%);
+    width:120px; height:28px; background:#0A0A0A; border-radius:0 0 18px 18px; z-index:50;
+  }
+
+  /* ===== STATUS BAR ===== */
+  .statusbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 26px 4px; font-family:var(--font-mono); font-size:14px; font-weight:600; color:var(--ink-950);
+    flex-shrink:0;
+  }
+  .statusbar .icons{display:flex; align-items:center; gap:5px;}
+  .statusbar svg{display:block;}
+
+  /* ===== SCREENS ===== */
+  .screens{flex:1; position:relative; overflow:hidden;}
+  .screen{
+    position:absolute; inset:0; overflow-y:auto; padding:6px 20px 100px;
+    display:none;
+  }
+  .screen.active{display:block;}
+  .screen::-webkit-scrollbar{display:none;}
+
+  .large-title{font-family:var(--font-display); font-weight:700; font-size:30px; letter-spacing:-0.02em; color:var(--ink-950); margin:10px 0 2px;}
+  .subtitle{font-size:13.5px; color:var(--text-muted); margin-bottom:18px;}
+
+  /* segmented control (iOS-style) */
+  .segmented{display:flex; background:var(--line); border-radius:10px; padding:3px; margin-bottom:18px;}
+  .segmented .seg{flex:1; text-align:center; padding:7px 0; font-size:13px; font-weight:600; color:var(--text-muted); border-radius:8px; cursor:pointer;}
+  .segmented .seg.active{background:var(--surface); color:var(--ink-950); box-shadow:0 1px 3px rgba(0,0,0,.08);}
+
+  /* week strip - same signature element as the panel */
+  .week-strip{display:flex; gap:3px;}
+  .wd{width:17px; height:17px; border-radius:5px; background:var(--paper); border:1px solid var(--line); font-size:8.5px; font-family:var(--font-mono); color:var(--text-faint); display:flex; align-items:center; justify-content:center;}
+  .wd.on{background:var(--coral); border-color:var(--coral); color:#fff;}
+
+  /* treino card */
+  .treino-card{background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:16px; margin-bottom:12px;}
+  .tc-top{display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:10px;}
+  .tc-title{font-family:var(--font-display); font-weight:700; font-size:16px; color:var(--ink-950);}
+  .tc-meta{font-size:12px; color:var(--text-muted); margin-top:2px;}
+  .tc-badge{font-size:10px; font-weight:700; background:var(--jade-soft); color:var(--jade-dark); padding:4px 8px; border-radius:20px; text-transform:uppercase; letter-spacing:.03em; font-family:var(--font-mono);}
+  .tc-bottom{display:flex; align-items:center; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:1px solid var(--line);}
+  .tc-count{font-size:12px; color:var(--text-faint); font-family:var(--font-mono);}
+  .btn-start{background:var(--coral); color:#fff; font-size:12.5px; font-weight:700; padding:8px 16px; border-radius:20px; display:flex; align-items:center; gap:5px;}
+  .btn-start svg{width:12px; height:12px;}
+
+  /* stat pill row on home */
+  .stat-row{display:flex; gap:10px; margin-bottom:22px;}
+  .stat-card{flex:1; background:var(--ink-950); border-radius:16px; padding:14px;}
+  .stat-card .lbl{font-size:10.5px; color:#9AA79C; margin-bottom:6px; font-weight:500;}
+  .stat-card .val{font-family:var(--font-display); font-size:20px; font-weight:700; color:#fff;}
+  .stat-card.alt{background:var(--coral);}
+  .stat-card.alt .lbl{color:#FFD9CC;}
+
+  /* section label */
+  .section-lbl{font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-faint); margin:20px 0 10px;}
+
+  /* EXECUÇÃO screen */
+  .back-row{display:flex; align-items:center; justify-content:space-between; padding-top:8px; margin-bottom:6px;}
+  .back-btn{display:flex; align-items:center; gap:3px; color:var(--coral); font-weight:600; font-size:14.5px;}
+  .back-btn svg{width:18px; height:18px;}
+  .timer-pill{font-family:var(--font-mono); font-size:12.5px; font-weight:600; background:var(--jade-soft); color:var(--jade-dark); padding:5px 11px; border-radius:20px;}
+
+  .exec-header{margin-bottom:16px;}
+  .exec-week{display:flex; gap:3px; margin-top:8px;}
+
+  .exercise-block{background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:16px; margin-bottom:12px;}
+  .eb-top{display:flex; align-items:center; gap:11px; margin-bottom:12px;}
+  .eb-thumb{width:44px; height:44px; border-radius:11px; background:var(--gold-soft); display:flex; align-items:center; justify-content:center; color:var(--gold-dark); flex-shrink:0;}
+  .eb-thumb svg{width:20px; height:20px;}
+  .eb-name{font-size:14.5px; font-weight:700; color:var(--ink-950);}
+  .eb-target{font-size:11.5px; color:var(--text-muted); font-family:var(--font-mono); margin-top:1px;}
+
+  .set-row{display:grid; grid-template-columns:24px 1fr 1fr 30px; align-items:center; gap:10px; padding:8px 0;}
+  .set-row + .set-row{border-top:1px solid var(--line);}
+  .set-num{font-family:var(--font-mono); font-size:11.5px; color:var(--text-faint); font-weight:600;}
+  .set-input-wrap{display:flex; flex-direction:column; gap:2px;}
+  .set-input-wrap label{font-size:9px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.04em; font-weight:600;}
+  .set-input{border:1px solid var(--line-strong); border-radius:8px; padding:7px 8px; font-size:13px; font-family:var(--font-mono); text-align:center; background:var(--paper); width:100%;}
+  .set-check{width:26px; height:26px; border-radius:50%; border:2px solid var(--line-strong); display:flex; align-items:center; justify-content:center; cursor:pointer;}
+  .set-check.done{background:var(--jade); border-color:var(--jade);}
+  .set-check svg{width:13px; height:13px; color:#fff; display:none;}
+  .set-check.done svg{display:block;}
+
+  .sticky-footer{position:sticky; bottom:0; background:linear-gradient(180deg, rgba(243,242,236,0) 0%, var(--paper) 30%); padding-top:20px; margin-top:6px;}
+  .btn-finish{width:100%; background:var(--ink-950); color:#fff; font-weight:700; font-size:15px; padding:15px 0; border-radius:16px; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px;}
+  .btn-finish svg{width:17px; height:17px;}
+
+  /* DIETA screen */
+  .pdf-hero{background:var(--ink-950); border-radius:20px; padding:22px; margin-bottom:16px; position:relative; overflow:hidden;}
+  .pdf-hero .lbl{font-size:11px; color:#9AA79C; font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px;}
+  .pdf-hero .fname{font-family:var(--font-display); font-size:19px; font-weight:700; color:#fff; margin-bottom:4px;}
+  .pdf-hero .fdate{font-size:12px; color:#9AA79C; margin-bottom:16px;}
+  .btn-view{background:var(--coral); color:#fff; font-weight:700; font-size:13.5px; padding:11px 0; border-radius:12px; text-align:center; display:flex; align-items:center; justify-content:center; gap:7px;}
+  .btn-view svg{width:15px; height:15px;}
+
+  .version-row{display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:13px 15px; margin-bottom:9px;}
+  .version-icon{width:34px; height:34px; border-radius:9px; background:var(--paper); display:flex; align-items:center; justify-content:center; color:var(--text-muted); flex-shrink:0;}
+  .version-icon svg{width:16px; height:16px;}
+  .version-name{font-size:13px; font-weight:600; color:var(--ink-950);}
+  .version-date{font-size:11px; color:var(--text-faint); margin-top:1px; font-family:var(--font-mono);}
+  .version-current{margin-left:auto; font-size:9.5px; font-weight:700; color:var(--jade-dark); background:var(--jade-soft); padding:3px 8px; border-radius:20px; text-transform:uppercase;}
+
+  /* PERFIL screen */
+  .profile-hero{display:flex; flex-direction:column; align-items:center; padding:14px 0 22px;}
+  .avatar-xl{width:84px; height:84px; border-radius:50%; background:var(--coral-soft); color:var(--coral-dark); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:700; font-size:28px; margin-bottom:12px;}
+  .profile-hero h2{font-family:var(--font-display); font-size:20px; font-weight:700; color:var(--ink-950);}
+  .profile-hero p{font-size:12.5px; color:var(--text-muted); margin-top:2px;}
+
+  .stat-trio{display:flex; background:var(--surface); border:1px solid var(--line); border-radius:16px; overflow:hidden; margin-bottom:20px;}
+  .stat-trio > div{flex:1; text-align:center; padding:14px 0;}
+  .stat-trio > div + div{border-left:1px solid var(--line);}
+  .stat-trio .v{font-family:var(--font-mono); font-weight:600; font-size:15px; color:var(--ink-950);}
+  .stat-trio .k{font-size:10px; color:var(--text-faint); margin-top:3px;}
+
+  .menu-list{background:var(--surface); border:1px solid var(--line); border-radius:16px; overflow:hidden;}
+  .menu-item{display:flex; align-items:center; gap:12px; padding:14px 16px;}
+  .menu-item + .menu-item{border-top:1px solid var(--line);}
+  .menu-icon{width:30px; height:30px; border-radius:8px; background:var(--paper); display:flex; align-items:center; justify-content:center; color:var(--text-muted); flex-shrink:0;}
+  .menu-icon svg{width:15px; height:15px;}
+  .menu-label{font-size:13.5px; font-weight:600; color:var(--ink-950); flex:1;}
+  .menu-item svg.chev{width:15px; height:15px; color:var(--text-faint);}
+  .menu-item.danger .menu-label{color:var(--coral-dark);}
+  .menu-item.danger .menu-icon{background:var(--coral-soft); color:var(--coral-dark);}
+
+  /* progresso screen */
+  .chart-card{background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:18px; margin-bottom:14px;}
+  .chart-card .ct{font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:14px;}
+  .bars{display:flex; align-items:flex-end; gap:8px; height:110px;}
+  .bar{flex:1; background:var(--jade-soft); border-radius:5px 5px 0 0; position:relative; display:flex; align-items:flex-end; justify-content:center;}
+  .bar b{position:absolute; bottom:5px; font-size:8.5px; color:var(--jade-dark); font-family:var(--font-mono); font-weight:700;}
+  .bar span{position:absolute; top:-15px; font-size:8.5px; color:var(--text-faint); font-family:var(--font-mono);}
+
+  .exercicio-progresso{display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:9px;}
+  .ep-icon{width:36px; height:36px; border-radius:10px; background:var(--gold-soft); color:var(--gold-dark); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .ep-icon svg{width:16px; height:16px;}
+  .ep-name{font-size:13px; font-weight:600; color:var(--ink-950);}
+  .ep-detail{font-size:11px; color:var(--text-faint); font-family:var(--font-mono);}
+  .ep-trend{margin-left:auto; font-size:11.5px; font-weight:700; color:var(--jade-dark); display:flex; align-items:center; gap:2px;}
+  .ep-trend svg{width:12px; height:12px;}
+
+  /* ===== BOTTOM TAB BAR (iOS style) ===== */
+  .tabbar{
+    position:absolute; bottom:0; left:0; right:0;
+    background:rgba(248,247,242,0.88); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    border-top:1px solid var(--line); padding:9px 6px 6px; display:flex; z-index:40;
+  }
+  .tab{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer;}
+  .tab svg{width:24px; height:24px; color:var(--text-faint); stroke-width:1.9;}
+  .tab span{font-size:10px; font-weight:600; color:var(--text-faint);}
+  .tab.active svg{color:var(--coral);}
+  .tab.active span{color:var(--coral);}
+  .home-indicator{position:absolute; bottom:9px; left:50%; transform:translateX(-50%); width:134px; height:5px; background:var(--ink-950); border-radius:20px; opacity:.9; z-index:41;}
+
+  .caption{text-align:center; margin-top:22px; font-size:12.5px; color:#8A8A80; font-family:var(--font-body);}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="notch"></div>
+  <div class="screen-wrap">
+
+    <div class="statusbar">
+      <div>9:41</div>
+      <div class="icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="none"><rect x="0" y="6" width="3" height="5" rx="0.5" fill="currentColor"/><rect x="4.5" y="4" width="3" height="7" rx="0.5" fill="currentColor"/><rect x="9" y="2" width="3" height="9" rx="0.5" fill="currentColor"/><rect x="13.5" y="0" width="3" height="11" rx="0.5" fill="currentColor"/></svg>
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M8 9.5a1.2 1.2 0 100 2.4 1.2 1.2 0 000-2.4zM4.7 6.7a4.7 4.7 0 016.6 0l-1.1 1.1a3.1 3.1 0 00-4.4 0L4.7 6.7zM2.3 4.3a8 8 0 0111.4 0L12.6 5.4a6.4 6.4 0 00-9.2 0L2.3 4.3z" fill="currentColor"/></svg>
+        <svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x="1" y="1" width="19" height="10" rx="2.5" stroke="currentColor" stroke-width="1"/><rect x="2.5" y="2.5" width="14" height="7" rx="1.2" fill="currentColor"/><rect x="21" y="4" width="1.6" height="4" rx="0.8" fill="currentColor"/></svg>
+      </div>
+    </div>
+
+    <div class="screens">
+
+      <!-- TREINOS (Home) -->
+      <div class="screen active" id="screen-treinos">
+        <div class="large-title">Olá, Marina</div>
+        <div class="subtitle">Terça-feira · pronta pra treinar hoje?</div>
+
+        <div class="stat-row">
+          <div class="stat-card alt"><div class="lbl">Sequência</div><div class="val">5 dias</div></div>
+          <div class="stat-card"><div class="lbl">Esta semana</div><div class="val">3/4</div></div>
+        </div>
+
+        <div class="segmented">
+          <div class="seg active">Disponíveis</div>
+          <div class="seg">Concluídos</div>
+        </div>
+
+        <div class="treino-card" onclick="showScreen('execucao')">
+          <div class="tc-top">
+            <div>
+              <div class="tc-title">Treino A — Superior</div>
+              <div class="tc-meta">6 exercícios · ~45 min</div>
+            </div>
+            <span class="tc-badge">Novo</span>
+          </div>
+          <div class="week-strip"><div class="wd on">S</div><div class="wd">T</div><div class="wd on">Q</div><div class="wd">Q</div><div class="wd">S</div><div class="wd">S</div><div class="wd">D</div></div>
+          <div class="tc-bottom">
+            <span class="tc-count">enviado por Carlos</span>
+            <div class="btn-start">Iniciar<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 6l6 6-6 6"/></svg></div>
+          </div>
+        </div>
+
+        <div class="treino-card" onclick="showScreen('execucao')">
+          <div class="tc-top">
+            <div>
+              <div class="tc-title">Treino B — Inferior</div>
+              <div class="tc-meta">4 exercícios · ~35 min</div>
+            </div>
+          </div>
+          <div class="week-strip"><div class="wd">S</div><div class="wd on">T</div><div class="wd">Q</div><div class="wd on">Q</div><div class="wd">S</div><div class="wd">S</div><div class="wd">D</div></div>
+          <div class="tc-bottom">
+            <span class="tc-count">último: há 4 dias</span>
+            <div class="btn-start">Iniciar<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 6l6 6-6 6"/></svg></div>
+          </div>
+        </div>
+
+        <div class="section-lbl">Concluído recentemente</div>
+        <div class="treino-card" style="opacity:.6">
+          <div class="tc-top">
+            <div>
+              <div class="tc-title">Treino A — Superior</div>
+              <div class="tc-meta">Concluído ontem às 18:20</div>
+            </div>
+            <span class="tc-badge" style="background:var(--gold-soft); color:var(--gold-dark)">Feito</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXECUÇÃO -->
+      <div class="screen" id="screen-execucao">
+        <div class="back-row">
+          <div class="back-btn" onclick="showScreen('treinos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>Treinos</div>
+          <div class="timer-pill">12:04</div>
+        </div>
+        <div class="exec-header">
+          <div class="large-title" style="font-size:24px; margin-top:4px;">Treino A — Superior</div>
+          <div class="exec-week"><div class="wd on">S</div><div class="wd">T</div><div class="wd on">Q</div><div class="wd">Q</div><div class="wd">S</div><div class="wd">S</div><div class="wd">D</div></div>
+        </div>
+
+        <div class="exercise-block">
+          <div class="eb-top">
+            <div class="eb-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8v8M18 8v8M2 12h4M18 12h4M8 12h8"/></svg></div>
+            <div><div class="eb-name">Supino reto com barra</div><div class="eb-target">alvo: 4 × 12</div></div>
+          </div>
+          <div class="set-row">
+            <div class="set-num">01</div>
+            <div class="set-input-wrap"><label>Reps</label><input class="set-input" value="12"></div>
+            <div class="set-input-wrap"><label>Kg</label><input class="set-input" value="40"></div>
+            <div class="set-check done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></div>
+          </div>
+          <div class="set-row">
+            <div class="set-num">02</div>
+            <div class="set-input-wrap"><label>Reps</label><input class="set-input" value="10"></div>
+            <div class="set-input-wrap"><label>Kg</label><input class="set-input" value="40"></div>
+            <div class="set-check done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L20 7"/></svg></div>
+          </div>
+          <div class="set-row">
+            <div class="set-num">03</div>
+            <div class="set-input-wrap"><label>Reps</label><input class="set-input" placeholder="—"></div>
+            <div class="set-input-wrap"><label>Kg</label><input class="set-input" placeholder="—"></div>
+            <div class="set-check"></div>
+          </div>
+        </div>
+
+        <div class="exercise-block">
+          <div class="eb-top">
+            <div class="eb-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8v8M18 8v8M2 12h4M18 12h4M8 12h8"/></svg></div>
+            <div><div class="eb-name">Crucifixo reto</div><div class="eb-target">alvo: 3 × 15</div></div>
+          </div>
+          <div class="set-row">
+            <div class="set-num">01</div>
+            <div class="set-input-wrap"><label>Reps</label><input class="set-input" placeholder="—"></div>
+            <div class="set-input-wrap"><label>Kg</label><input class="set-input" placeholder="—"></div>
+            <div class="set-check"></div>
+          </div>
+        </div>
+
+        <div class="sticky-footer">
+          <div class="btn-finish">Concluir treino<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5L20 7"/></svg></div>
+        </div>
+      </div>
+
+      <!-- PROGRESSO -->
+      <div class="screen" id="screen-progresso">
+        <div class="large-title">Progresso</div>
+        <div class="subtitle">Sua evolução ao longo do tempo</div>
+
+        <div class="chart-card">
+          <div class="ct">Carga total — supino reto (kg)</div>
+          <div class="bars">
+            <div class="bar" style="height:38%"><span>S1</span><b>210</b></div>
+            <div class="bar" style="height:50%"><span>S2</span><b>240</b></div>
+            <div class="bar" style="height:56%"><span>S3</span><b>255</b></div>
+            <div class="bar" style="height:72%; background:var(--jade)"><span style="color:var(--jade)">S4</span><b style="color:#fff">290</b></div>
+            <div class="bar" style="height:88%; background:var(--jade)"><span style="color:var(--jade)">S5</span><b style="color:#fff">315</b></div>
+          </div>
+        </div>
+
+        <div class="section-lbl">Seus principais exercícios</div>
+        <div class="exercicio-progresso">
+          <div class="ep-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8v8M18 8v8M2 12h4M18 12h4M8 12h8"/></svg></div>
+          <div><div class="ep-name">Supino reto</div><div class="ep-detail">315 kg volume total</div></div>
+          <div class="ep-trend"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 18L18 6M18 6H9M18 6v9"/></svg>+12%</div>
+        </div>
+        <div class="exercicio-progresso">
+          <div class="ep-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8v8M18 8v8M2 12h4M18 12h4M8 12h8"/></svg></div>
+          <div><div class="ep-name">Agachamento livre</div><div class="ep-detail">480 kg volume total</div></div>
+          <div class="ep-trend"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 18L18 6M18 6H9M18 6v9"/></svg>+8%</div>
+        </div>
+        <div class="exercicio-progresso">
+          <div class="ep-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8v8M18 8v8M2 12h4M18 12h4M8 12h8"/></svg></div>
+          <div><div class="ep-name">Puxada frontal</div><div class="ep-detail">260 kg volume total</div></div>
+          <div class="ep-trend"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 18L18 6M18 6H9M18 6v9"/></svg>+5%</div>
+        </div>
+      </div>
+
+      <!-- DIETA -->
+      <div class="screen" id="screen-dieta">
+        <div class="large-title">Dieta</div>
+        <div class="subtitle">Plano nutricional atualizado pelo seu personal</div>
+
+        <div class="pdf-hero">
+          <div class="lbl">Vigente desde 05/08</div>
+          <div class="fname">plano_dieta_agosto.pdf</div>
+          <div class="fdate">Enviado por Carlos Ramos</div>
+          <div class="btn-view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>Abrir PDF</div>
+        </div>
+
+        <div class="section-lbl">Histórico de versões</div>
+        <div class="version-row">
+          <div class="version-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+          <div><div class="version-name">plano_dieta_agosto.pdf</div><div class="version-date">05/08/2026</div></div>
+          <span class="version-current">Atual</span>
+        </div>
+        <div class="version-row">
+          <div class="version-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+          <div><div class="version-name">plano_dieta_junho.pdf</div><div class="version-date">02/06/2026</div></div>
+        </div>
+        <div class="version-row">
+          <div class="version-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+          <div><div class="version-name">plano_dieta_abril.pdf</div><div class="version-date">14/04/2026</div></div>
+        </div>
+      </div>
+
+      <!-- PERFIL -->
+      <div class="screen" id="screen-perfil">
+        <div class="profile-hero">
+          <div class="avatar-xl">MF</div>
+          <h2>Marina Ferreira</h2>
+          <p>marina.f@email.com</p>
+        </div>
+
+        <div class="stat-trio">
+          <div><div class="v">28</div><div class="k">anos</div></div>
+          <div><div class="v">63,4</div><div class="k">kg</div></div>
+          <div><div class="v">1,68</div><div class="k">m</div></div>
+        </div>
+
+        <div class="section-lbl">Conta</div>
+        <div class="menu-list">
+          <div class="menu-item">
+            <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+            <div class="menu-label">Editar perfil</div>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+          <div class="menu-item">
+            <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+            <div class="menu-label">Notificações</div>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+          <div class="menu-item">
+            <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg></div>
+            <div class="menu-label">Ajuda e suporte</div>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+        </div>
+
+        <div class="section-lbl">&nbsp;</div>
+        <div class="menu-list">
+          <div class="menu-item danger">
+            <div class="menu-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg></div>
+            <div class="menu-label">Sair da conta</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="tabbar">
+      <div class="tab active" data-tab="treinos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8v8M18 8v8M2 12h4M18 12h4M8 12h8"/></svg>
+        <span>Treinos</span>
+      </div>
+      <div class="tab" data-tab="progresso">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+        <span>Progresso</span>
+      </div>
+      <div class="tab" data-tab="dieta">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+        <span>Dieta</span>
+      </div>
+      <div class="tab" data-tab="perfil">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Perfil</span>
+      </div>
+    </div>
+    <div class="home-indicator"></div>
+
+  </div>
+</div>
+
+<script>
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const map = {treinos:'treinos', execucao:'treinos', progresso:'progresso', dieta:'dieta', perfil:'perfil'};
+  const target = document.querySelector('.tab[data-tab="'+map[name]+'"]');
+  if(target) target.classList.add('active');
+}
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>showScreen(tab.dataset.tab));
+});
+document.querySelectorAll('.segmented .seg').forEach(seg=>{
+  seg.addEventListener('click', ()=>{
+    seg.parentElement.querySelectorAll('.seg').forEach(s=>s.classList.remove('active'));
+    seg.classList.add('active');
+  });
+});
+document.querySelectorAll('.set-check').forEach(chk=>{
+  chk.addEventListener('click', ()=>chk.classList.toggle('done'));
+});
+</script>
+</body>
+</html>
