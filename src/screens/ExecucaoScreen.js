@@ -4,6 +4,7 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -64,6 +65,14 @@ function DumbbellIcon({ color, size = 20 }) {
   );
 }
 
+function CloseIcon({ color = '#fff', size = 22 }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.3} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M6 6l12 12M18 6L6 18" />
+    </Svg>
+  );
+}
+
 function WeekStrip({ diasSemana }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -86,27 +95,53 @@ function ExercicioBlock({ treinoExercicio, registros, onChange }) {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { exercicio, seriesPrescritas, repeticoesPrescritas } = treinoExercicio;
   const [imagemComErro, setImagemComErro] = useState(false);
+  const [modalAberto, setModalAberto] = useState(false);
   const mostrarImagem = Boolean(exercicio.imagemUrl) && !imagemComErro;
 
   return (
     <View style={styles.exBlock}>
       <View style={styles.exTop}>
-        <View style={styles.exThumb}>
+        <TouchableOpacity
+          style={styles.exThumb}
+          onPress={() => mostrarImagem && setModalAberto(true)}
+          activeOpacity={mostrarImagem ? 0.8 : 1}
+        >
           {mostrarImagem ? (
             <Image
               source={{ uri: exercicio.imagemUrl }}
               style={styles.exThumbImage}
+              resizeMode="cover"
               onError={() => setImagemComErro(true)}
             />
           ) : (
             <DumbbellIcon color={colors.goldDark} />
           )}
-        </View>
+        </TouchableOpacity>
         <View>
           <Text style={styles.exName}>{exercicio.nome}</Text>
           <Text style={styles.exTarget}>alvo: {seriesPrescritas} × {repeticoesPrescritas}</Text>
         </View>
       </View>
+
+      {mostrarImagem && (
+        <Modal visible={modalAberto} transparent animationType="fade" onRequestClose={() => setModalAberto(false)}>
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setModalAberto(false)}
+          >
+            <View style={styles.modalCloseBtn}>
+              <CloseIcon />
+            </View>
+            <Text style={styles.modalTitle}>{exercicio.nome}</Text>
+            <Image
+              source={{ uri: exercicio.imagemUrl }}
+              style={styles.modalImage}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        </Modal>
+      )}
 
       {Array.from({ length: seriesPrescritas }, (_, i) => i + 1).map((serieNumero, idx) => {
         const chave = chaveSerie(treinoExercicio.exercicioId, serieNumero);
@@ -436,9 +471,9 @@ const createStyles = (colors) => StyleSheet.create({
     marginBottom: 12,
   },
   exThumb: {
-    width: 44,
-    height: 44,
-    borderRadius: 11,
+    width: 72,
+    height: 72,
+    borderRadius: 14,
     backgroundColor: colors.goldSoft,
     alignItems: 'center',
     justifyContent: 'center',
@@ -447,6 +482,31 @@ const createStyles = (colors) => StyleSheet.create({
   exThumbImage: {
     width: '100%',
     height: '100%',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalCloseBtn: {
+    position: 'absolute',
+    top: 54,
+    right: 20,
+    padding: 6,
+  },
+  modalTitle: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 15,
+    color: '#fff',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  modalImage: {
+    width: '100%',
+    height: 340,
+    borderRadius: 16,
   },
   exName: {
     fontFamily: fonts.bodyBold,
