@@ -23,10 +23,14 @@ export function AuthProvider({ children }) {
     setAuthMessage('');
   }, []);
 
+  // Aceita opcionalmente uma mensagem pra mostrar na tela de login (ex: sessão
+  // expirada). Só usa se for string de verdade — protege contra o erro comum
+  // de passar a função direto num onPress (ex: onPress={logout}), que injeta
+  // o evento de toque como primeiro argumento em vez de uma mensagem.
   const logout = useCallback(async (mensagem) => {
     await AsyncStorage.removeItem(TOKEN_KEY);
     setToken(null);
-    setAuthMessage(mensagem ?? '');
+    setAuthMessage(typeof mensagem === 'string' ? mensagem : '');
   }, []);
 
   useEffect(() => {

@@ -197,7 +197,7 @@ export default function PerfilScreen() {
           <Text style={styles.themeAction}>Trocar</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={logout} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.logoutButton} onPress={() => logout()} activeOpacity={0.85}>
           <Text style={styles.logoutText}>Sair da conta</Text>
         </TouchableOpacity>
       </View>
